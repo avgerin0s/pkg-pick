@@ -1,0 +1,5 @@
+pick (1.1.1-1) unstable; urgency=medium
+
+  * Initial release. (Closes: #780483)
+
+ -- Aggelos Avgerinos <evaggelos.avgerinos@gmail.com>  Sun, 15 Mar 2015 02:39:41 +0200

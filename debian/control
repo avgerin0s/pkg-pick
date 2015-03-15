@@ -1,0 +1,18 @@
+Source: pick
+Section: misc
+Priority: optional
+Maintainer: Aggelos Avgerinos <evaggelos.avgerinos@gmail.com>
+Build-Depends: debhelper(>= 9), libncursesw5-dev, dh-autoreconf
+Standards-Version: 3.9.6
+Homepage: https://github.com/thoughtbot/pick
+Vcs-Git: https://github.com/eavgerinos/pkg-pick.git
+Vcs-Browser: https://github.com/eavgerinos/pkg-pick
+
+Package: pick
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: utility to choose one option from a set of choices
+ The pick utility allows users to choose one option from a set of
+ choices using an interface with fuzzy search functionality.
+ pick reads a list of choices on stdin and outputs the selected choice
+ on stdout. Therefore it is easily used both in pipelines and subshells.
