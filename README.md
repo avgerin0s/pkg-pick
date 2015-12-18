@@ -26,6 +26,12 @@ brew tap thoughtbot/formulae
 brew install pick
 ```
 
+### Mac OS X via MacPorts
+
+```sh
+sudo port install pick
+```
+
 ### From source
 
 1. Download the latest release from [the releases page], optionally check the
@@ -72,6 +78,6 @@ See the `pick(1)` man page for detailed usage instructions and more examples.
 
 ## Copyright
 
-Copyright (c) 2014 Calle Erlandsson & thoughtbot, Inc.
+Copyright (c) 2015 Calle Erlandsson & thoughtbot, Inc.
 
 Lead by Calle Erlandsson & thoughtbot, Inc.
