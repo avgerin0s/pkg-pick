@@ -8,35 +8,29 @@
 #include "io.h"
 #include "ui.h"
 
-void usage();
-void version();
+static void usage();
+static void version();
 
 int
-main(int argc,char **argv)
+main(int argc, char **argv)
 {
-	int ch;
-	int display_desc;
-	int output_desc;
-	int use_alternate_screen;
-	char *query;
-	struct choices *cs;
+	char *query = "";
+	int option, use_alternate_screen;
+	int display_descriptions = 0;
+	int output_description = 0;
+	struct choices *choices;
 
-	display_desc = 0;
-	output_desc = 0;
-	use_alternate_screen = 1;
-	if (getenv("VIM") != NULL) {
-		use_alternate_screen = 0;
-	}
-	query = "";
-	while ((ch = getopt(argc, argv, "hvdoq:xX")) != -1)
-		switch (ch) {
+	use_alternate_screen = getenv("VIM") == NULL;
+
+	while ((option = getopt(argc, argv, "hvdoq:xX")) != -1) {
+		switch (option) {
 		case 'v':
 			version();
 		case 'd':
-			display_desc = 1;
+			display_descriptions = 1;
 			break;
 		case 'o':
-			output_desc = 1;
+			output_description = 1;
 			break;
 		case 'q':
 			query = optarg;
@@ -50,34 +44,49 @@ main(int argc,char **argv)
 		default:
 			usage();
 		}
+	}
+
 	argc -= optind;
 	argv += optind;
 
-	output_desc = output_desc && display_desc;
+	/*
+	 * Only output description if descriptions are read and displayed in the
+	 * list of choices.
+	 */
+	output_description = output_description && display_descriptions;
 
-	cs = get_choices(display_desc);
-	put_choice(get_selected(cs, query, use_alternate_screen), output_desc);
-	choices_free(cs);
+	choices = io_read_choices(display_descriptions);
+
+	io_print_choice(
+	    ui_selected_choice(choices, query, use_alternate_screen),
+	    output_description);
+
+	choices_free(choices);
+
 	return EX_OK;
 }
 
-void
+static void
 usage()
 {
-	fprintf(stderr, "usage: pick [-h] [-v] [-q QUERY] [-d [-o]] [-x | -X]\n");
+	fprintf(stderr,
+	    "usage: pick [-h] [-v] [-q QUERY] [-d [-o]] [-x | -X]\n");
 	fprintf(stderr, "    -h          output this help message and exit\n");
 	fprintf(stderr, "    -v          output the version and exit\n");
 	fprintf(stderr, "    -q QUERY    supply an initial search query\n");
 	fprintf(stderr, "    -d          read and display descriptions\n");
-	fprintf(stderr, "    -o          output description of selected on exit\n");
+	fprintf(stderr,
+	    "    -o          output description of selected on exit\n");
 	fprintf(stderr, "    -x          enable alternate screen\n");
 	fprintf(stderr, "    -X          disable alternate screen\n");
+
 	exit(EX_USAGE);
 }
 
-void
+static void
 version()
 {
 	printf("%s\n", PACKAGE_VERSION);
+
 	exit(EX_OK);
 }
