@@ -5,28 +5,31 @@
 .Nm pick
 .Nd fuzzy select anything
 .Sh SYNOPSIS
-.Nm pick
-.Op Fl h
-.Op Fl v
-.Op Fl q Ar QUERY
+.Nm
+.Op Fl hvS
 .Op Fl d Op Fl o
 .Op Fl x | Fl X
+.Op Fl q Ar query
 .Sh DESCRIPTION
-.Nm pick
+.Nm
 allows users to select from a set of choices using an
 .Xr ncurses 3X
 interface with fuzzy search functionality.
 .Pp
-.Nm pick
+.Nm
 accepts a list of choices as input and produces the selected choice as output.
 .Pp
-.Nm pick
+.Nm
 supports these options and arguments:
 .Bl -tag -width "\&-q QUERY"
 .It Fl h
 output a help message and exit.
 .It Fl v
 output the version and exit.
+.It Fl S
+disable sorting.
+.Pp
+Only filter the choices instead of additionally sorting by score.
 .It Fl q Ar QUERY
 supply an initial search query.
 .It Fl d
@@ -48,12 +51,17 @@ disable the use of the alternate screen terminal feature.
 .El
 .Pp
 The
-.Nm pick
+.Nm
 .Xr ncurses 3X
 interface is operated with the following keys:
 .Bl -tag -width Backspace
+.It Ic "Ctrl\&-C"
+Exit with a status of 130 without outputting the selected choice.
 .It Ic "Up\&/Down or Ctrl\&-P\&/Ctrl\&-N"
 Select between choices matching the current search query.
+.It Ic Page-Down\&/Page-Up
+Move the selection to the choice located one page down/up from the currently
+selected choice.
 .It Ic Enter
 Output the currently selected choice and exit.
 .It Ic Alt\&-Enter
@@ -69,7 +77,7 @@ Move the cursor to the beginning of the line in the search query input field.
 Move the cursor to the end of the line in the search query input field.
 .It Ic Backspace
 Delete one character to the left of the cursor in the search query input field.
-.It Ic "Ctrl\&-D"
+.It Ic "Delete or Ctrl\&-D"
 Delete the character under the cursor in the search query input field.
 .It Ic "Ctrl\&-W"
 Delete to the beginning of the closest word to the left in the search query
@@ -85,20 +93,9 @@ The following environment variables will affect the execution of
 .Bl -tag -width IFS
 .It Ev IFS
 Determines the separator used between choices and descriptions.
-.It Ev VIM
-If set, disables the use of the alternate screen terminal feature. This avoids
-issues with using the alternate screen when run using
-.Fn system
-in
-.Xr vim 1 .
-To force the use of the alternate screen run
-.Nm pick
-with the
-.Fl x
-option.
 .El
 .Sh EXAMPLES
-.Nm pick
+.Nm
 can be used to select anything and is very effective when combined with
 utilities like
 .Xr xargs 1 .
@@ -116,4 +113,5 @@ apropos -l . | fltr | pick -do | tac | xargs man
 .Ed
 .Sh AUTHORS
 .An "Calle Erlandsson" Aq calle@thoughtbot.com
+.An "Anton Lindqvist" Aq anton.lindqvist@gmail.com
 .An "thoughtbot" Aq hello@thoughtbot.com
