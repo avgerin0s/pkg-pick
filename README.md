@@ -12,17 +12,23 @@ using an interface with fuzzy search functionality.
 A package for Pick is available in [the AUR].
 
 ```sh
-wget https://aur.archlinux.org/packages/pi/pick/pick.tar.gz
+curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/pick.tar.gz
 tar -xzf pick.tar.gz
 cd pick
-makepkg -s
-pacman -U pick-VERSION-x86_64.pkg.tar.xz
+makepkg -sri
+```
+
+### Debian and Ubuntu
+
+A package for Pick is available as of [Debian 9] and [Ubuntu 15.10].
+
+```sh
+apt-get install pick
 ```
 
 ### Mac OS X via Homebrew
 
 ```sh
-brew tap thoughtbot/formulae
 brew install pick
 ```
 
@@ -30,6 +36,19 @@ brew install pick
 
 ```sh
 sudo port install pick
+```
+
+### FreeBSD via Ports
+
+```sh
+cd /usr/ports/sysutils/pick
+make install clean
+```
+
+### FreeBSD via pkgng
+
+```sh
+pkg install pick
 ```
 
 ### From source
@@ -52,6 +71,8 @@ less INSTALL.md
 ```
 
 [the AUR]: https://aur.archlinux.org/packages/pick/
+[Debian 9]: https://packages.debian.org/stretch/pick
+[Ubuntu 15.10]: http://packages.ubuntu.com/wily/pick
 [the releases page]: https://github.com/thoughtbot/pick/releases/
 
 ## Usage
@@ -78,6 +99,19 @@ See the `pick(1)` man page for detailed usage instructions and more examples.
 
 ## Copyright
 
-Copyright (c) 2015 Calle Erlandsson & thoughtbot, Inc.
+Copyright (c) 2016 Calle Erlandsson, Anton Lindqvist & thoughtbot.
 
-Lead by Calle Erlandsson & thoughtbot, Inc.
+Lead by Calle Erlandsson & thoughtbot's
+[Stockholm software design and development team][team].
+
+[team]: https://thoughtbot.com/stockholm?utm_source=github
+
+## About thoughtbot
+
+![thoughtbot](https://thoughtbot.com/logo.png)
+
+See [our other open source projects][community] or
+[hire us][hire] to design, develop, and grow your product.
+
+[community]: https://thoughtbot.com/tools?utm_source=github
+[hire]: https://thoughtbot.com/hire-us?utm_source=github
