@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Aggelos Avgerinos <evaggelos.avgerinos@gmail.com>
 Build-Depends: debhelper(>= 9), libncursesw5-dev, dh-autoreconf
 Standards-Version: 3.9.6
-Homepage: https://github.com/thoughtbot/pick
+Homepage: https://github.com/calleerlandsson/pick
 Vcs-Git: https://github.com/eavgerinos/pkg-pick.git
 Vcs-Browser: https://github.com/eavgerinos/pkg-pick
 
