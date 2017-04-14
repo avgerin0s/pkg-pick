@@ -1,0 +1,20 @@
+# Use trusty environment for a up-to-date version of autotools
+sudo: required
+dist: trusty
+language: c
+os:
+  - linux
+  - osx
+compiler:
+  - clang
+  - gcc
+# GCC is linked to Clang on macOS
+matrix:
+  exclude:
+    - os: osx
+      compiler: gcc
+script:
+  - ./autogen.sh
+  - ./configure || (cat config.log; exit 1)
+  - make || exit 1
+  - make distcheck || (cat test-suite.log; exit 1)

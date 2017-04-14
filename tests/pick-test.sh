@@ -1,5 +1,7 @@
+#!/bin/sh
+
 usage() {
-  echo "usage: sh tests/test.sh file ..." 1>&2
+  echo "usage: sh tests/pick-test.sh file ..." 1>&2
   exit 1
 }
 
@@ -27,8 +29,7 @@ for testcase; do
     fi
   done <$testcase
 
-  env PATH="./src:${PATH}" tests/pick-test \
-    -k "$(printf "$keys")" -- $args <$stdin >$out 2>&1; e=$?
+  tests/pick-test -k "$(printf "$keys")" -- $args <$stdin >$out 2>&1; e=$?
   if [ "$exit" -ne "$e" ]; then
     echo "${testcase}: expected exit code ${exit}, got ${e}" 1>&2
     cat "$out" 1>&2
