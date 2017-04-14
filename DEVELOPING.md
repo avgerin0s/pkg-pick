@@ -25,7 +25,7 @@ Release
 
 1. Update the version in `configure.ac`:
 
-        AC_INIT([pick], [0.0.2], [hello@thoughtbot.com])
+        AC_INIT([pick], [0.0.2], [pick-maintainers@calleerlandsson.com])
 
 2. Verify the tarball:
 
@@ -50,12 +50,12 @@ Release
         gpg --verify pick-0.0.2.tar.gz.asc pick-0.0.2.tar.gz
 
 6. [Announce the release on
-   GitHub](https://github.com/thoughtbot/pick/releases/new).
+   GitHub](https://github.com/calleerlandsson/pick/releases/new).
 
 7. Contact package maintainers:
 
 * Aggelos Avgerinos <evaggelos.avgerinos@gmail.com> (Debian & Ubuntu)
-* Calle Erlandsson <calle@thoughtbot.com> (Arch Linux)
+* Calle Erlandsson <calle@calleerlandsson.com> (Arch Linux)
 * Chunyang Xu <xuchunyang.me@gmail.com> (MacPorts)
 * Fredrik Fornwall <fredrik@fornwall.net> (Homebrew)
 * Neel Chauhan <neel@neelc.org> (FreeBSD)

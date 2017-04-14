@@ -1,8 +1,40 @@
 # vX.Y.Z - YYYY-MM-DD
 
+# v1.5.4 - 2017-01-23
+
 ## Bug fixes
 
-- Refactoring and cleanup #164 (Anton Lindqvist)
+- Fix undefined behavior caused by shifting a signed integer (b4c8656) (Anton
+  Lindqvist)
+
+- Only define __dead if it's missing (#180) (Anton Lindqvist)
+
+# v1.5.3 - 2016-12-07
+
+## New features
+
+- Favor linking against curses instead of ncursesw (#167) (Anton Lindqvist)
+
+- Improve performance (647b734) (Anton Lindqvist)
+
+## Bug fixes
+
+- Cleanup man page (#172) (Anton Lindqvist)
+
+- Fix off-by-one error related to query memory allocation (485b436) (Anton
+  Lindqvist)
+
+- Fix underline spill over bug (#174) (Anton Lindqvist)
+
+- Fix shortest left-most match bug (42c8197) (Anton Lindqvist)
+
+- Recognize carriage return as enter (#178) (Anton Lindqvist)
+
+# v1.5.2 - 2016-10-13
+
+## Bug fixes
+
+- Refactoring and cleanup (#164) (Anton Lindqvist)
 
 - Disconnect the controlling terminal if present when running the tests
   (506a393) (Anton Lindqvist)
@@ -12,47 +44,47 @@
 ## New features
 
 - Improve readability of tests by adding comment support and cleanup test code
-  #161 (Anton Lindqvist)
+  (#161) (Anton Lindqvist)
 
 ## Bug fixes
 
-- Refactoring and cleanup #162 (Anton Lindqvist)
+- Refactoring and cleanup (#162) (Anton Lindqvist)
 
-- Fix issues on ancient terminals #163 (Anton Lindqvist)
+- Fix issues on ancient terminals (#163) (Anton Lindqvist)
 
 # v1.5.0 - 2016-09-19
 
 ## New features
 
-- Add FreeBSD installation instructions #130 (Neel Chauhan)
+- Add FreeBSD installation instructions (#130) (Neel Chauhan)
 
-- Improve test coverage #137, #150, #151 (Anton Lindqvist)
+- Improve test coverage (#137, #150, #151) (Anton Lindqvist)
 
-- Improve search performance #142 (Anton Lindqvist)
+- Improve search performance (#142) (Anton Lindqvist)
 
-- Add support for vertical scrolling #144 (Anton Lindqvist)
+- Add support for vertical scrolling (#144) (Anton Lindqvist)
 
-- Improve test suite #148, #150, #151, #159 (Anton Lindqvist, Calle Erlandsson)
+- Improve test suite #148, (#150, #151, #159) (Anton Lindqvist, Calle Erlandsson)
 
-- Add support for page keys #149 (Anton Lindqvist)
+- Add support for page keys (#149) (Anton Lindqvist)
 
-- Improve escape sequence handling #155 (Anton Lindqvist)
+- Improve escape sequence handling (#155) (Anton Lindqvist)
 
-- Improve cursor handling #156 (Anton Lindqvist)
+- Improve cursor handling (#156) (Anton Lindqvist)
 
-- Add a changelog #158 (Anton Lindqvist)
+- Add a changelog (#158) (Anton Lindqvist)
 
 ## Bug fixes
 
-- Fix building on Android #128 (Fredrik Fornwall)
+- Fix building on Android (#128) (Fredrik Fornwall)
 
-- Fix output of tabs #141 (Anton Lindqvist)
+- Fix output of tabs (#141) (Anton Lindqvist)
 
-- Fix issues on big endian machines #143 (borstel)
+- Fix issues on big endian machines (#143) (borstel)
 
-- Fix potential integer overflow #154 (Anton Lindqvist)
+- Fix potential integer overflow (#154) (Anton Lindqvist)
 
-- Refactoring and cleanup #133, #137, #150, #151, #152 (Anton Lindqvist)
+- Refactoring and cleanup (#133, #137, #150, #151, #152) (Anton Lindqvist)
 
 # v1.4.0 - 2016-06-03
 

@@ -32,7 +32,7 @@
 #define tty_putp(capability, fatal) do {				\
 	if (tputs(capability, 1, tty_putc) == ERR && fatal)		\
 		errx(1, #capability ": unknown terminfo capability");	\
-	} while (0)
+} while (0)
 
 enum {
 	UNKNOWN,
@@ -76,7 +76,6 @@ static size_t			 min_match(const char *, size_t, ssize_t *,
 static int			 print_choices(int, int);
 static void			 print_line(const char *, size_t, int, ssize_t,
 				    ssize_t);
-static void			 score(struct choice *);
 static const struct choice	*selected_choice(void);
 static const char		*strcasechr(const char *, const char *);
 static int			 tty_getc(void);
@@ -461,7 +460,7 @@ selected_choice(void)
 			if (!isu8start(buf[0]) && !isprint(buf[0]))
 				continue;
 
-			if (query_size < query_length + length) {
+			if (query_length + length >= query_size) {
 				query_size = 2*query_length + length;
 				if ((query = reallocarray(query, query_size,
 					    sizeof(char))) == NULL)
@@ -490,12 +489,23 @@ selected_choice(void)
 void
 filter_choices(void)
 {
-	struct pollfd	pfd;
-	size_t		i;
-	int		nready;
+	struct choice	*c;
+	struct pollfd	 pfd;
+	size_t		 i, match_length;
+	int		 nready;
 
 	for (i = 0; i < choices.length; i++) {
-		score(&choices.v[i]);
+		c = &choices.v[i];
+		if (min_match(c->string, 0,
+			    &c->match_start, &c->match_end) == INT_MAX) {
+			c->match_start = c->match_end = -1;
+			c->score = 0;
+		} else if (!sort) {
+			c->score = 1;
+		} else {
+			match_length = c->match_end - c->match_start;
+			c->score = (float)query_length/match_length/c->length;
+		}
 
 		/*
 		 * Regularly check if there is any new user input available. If
@@ -529,27 +539,6 @@ choicecmp(const void *p1, const void *p2)
 	return c1->string - c2->string;
 }
 
-void
-score(struct choice *choice)
-{
-	size_t	match_length;
-
-	if (min_match(choice->string, 0,
-		      &choice->match_start, &choice->match_end) == INT_MAX) {
-		choice->match_start = choice->match_end = -1;
-		choice->score = 0;
-		return;
-	}
-
-	if (!sort) {
-		choice->score = 1;
-		return;
-	}
-
-	match_length = choice->match_end - choice->match_start;
-	choice->score = (float)query_length / match_length / choice->length;
-}
-
 size_t
 min_match(const char *string, size_t offset, ssize_t *start, ssize_t *end)
 {
@@ -570,8 +559,9 @@ min_match(const char *string, size_t offset, ssize_t *start, ssize_t *end)
 	}
 
 	length = e - s;
+	/* LEQ is used to obtain the shortest left-most match. */
 	if (length == query_length
-	    || length < min_match(string, offset + 1, start, end)) {
+	    || length <= min_match(string, s - string + 1, start, end)) {
 		*start = s - string;
 		*end = e - string;
 	}
@@ -717,8 +707,9 @@ print_line(const char *string, size_t length, int so, ssize_t ulso, ssize_t uleo
 		if (tty_putc(' ') == EOF)
 			err(1, "tty_putc");
 
-	if (so)
-		tty_putp(exit_standout_mode, 1);
+	/* If uleo is greater than columns the underline attribute will spill
+	 * over on the next line unless all attributes are exited. */
+	tty_putp(exit_attribute_mode, 1);
 }
 
 /*
@@ -754,6 +745,7 @@ get_key(char *buf, size_t size, size_t *nread)
 		int		 key;
 	}	keys[] = {
 		{ "\n",		1,	ENTER },
+		{ "\r",		1,	ENTER },
 		{ "\177",	1,	BACKSPACE },
 		{ "\001",	1,	CTRL_A },
 		{ "\002",	1,	LEFT },
@@ -766,6 +758,7 @@ get_key(char *buf, size_t size, size_t *nread)
 		{ "\025",	1,	CTRL_U },
 		{ "\027",	1,	CTRL_W },
 		{ "\033\n",	2,	ALT_ENTER },
+		{ "\033\r",	2,	ALT_ENTER },
 		{ "\033[A",	3,	UP },
 		{ "\033OA",	3,	UP },
 		{ "\033[B",	3,	DOWN },
@@ -822,7 +815,7 @@ getc:
 	 * the character consists of, followed by a zero. Therefore, as long as
 	 * the MSB is not zero there is still bytes left to read.
 	 */
-	while (((buf[0] << *nread) & 0x80) == 0x80 && size-- > 0)
+	while ((((unsigned int)buf[0] << *nread) & 0x80) == 0x80 && size-- > 0)
 		buf[(*nread)++] = tty_getc();
 
 	return UNKNOWN;
