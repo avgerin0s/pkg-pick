@@ -1,3 +1,19 @@
+pick (1.5.4-1) unstable; urgency=medium
+
+  * New upstream release (Closes: #853611)
+  * d/watch: Move upstream repository under calleerlandsson
+  * d/rules: Export TERM env var
+  * d/control: Change standards version to 3.9.8
+  * d/rules: Enable all hardening features
+  * Change upstream repository homepage
+  * Update debian/copyright
+  * d/control: Build-Depend on libncurses5-dev instead of libncursesw5-dev
+    + Drop patch for linking with libncursesw5-dev
+  * d/rules: Run test with locale C.UTF-8
+  * Use upstream manpage
+
+ -- Aggelos Avgerinos <evaggelos.avgerinos@gmail.com>  Fri, 14 Apr 2017 13:09:54 +0300
+
 pick (1.1.1-1) unstable; urgency=medium
 
   * Initial release. (Closes: #780483)
