@@ -1,2 +1,2 @@
 version=3
-https://github.com/thoughtbot/pick/tags .*/v([\d.]+)\.tar\.gz
+https://github.com/calleerlandsson/pick/tags .*/v([\d.]+)\.tar\.gz
