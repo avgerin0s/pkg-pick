@@ -2,6 +2,8 @@
 #include "config.h"
 #endif
 
+#include <sys/ioctl.h>
+
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
@@ -11,7 +13,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <termios.h>
 #include <unistd.h>
 #include <wchar.h>
@@ -26,15 +27,12 @@
 
 #include "compat.h"
 
-#define EX_SIG 128
-#define EX_SIGINT (EX_SIG + SIGINT)
-
 #define tty_putp(capability, fatal) do {				\
 	if (tputs(capability, 1, tty_putc) == ERR && fatal)		\
 		errx(1, #capability ": unknown terminfo capability");	\
 } while (0)
 
-enum {
+enum key {
 	UNKNOWN,
 	ALT_ENTER,
 	BACKSPACE,
@@ -43,32 +41,37 @@ enum {
 	CTRL_A,
 	CTRL_E,
 	CTRL_K,
+	CTRL_L,
 	CTRL_U,
 	CTRL_W,
-	UP,
 	RIGHT,
-	DOWN,
 	LEFT,
+	LINE_DOWN,
+	LINE_UP,
 	PAGE_DOWN,
-	PAGE_UP
+	PAGE_UP,
+	END,
+	HOME,
+	PRINTABLE
 };
 
 struct choice {
-	char	*description;
-	char	*string;
-	size_t	 length;
-	ssize_t	 match_start;	/* inclusive match start offset */
-	ssize_t	 match_end;	/* exclusive match end offset */
-	float	 score;
+	const char	*description;
+	const char	*string;
+	size_t		 length;
+	ssize_t		 match_start;	/* inclusive match start offset */
+	ssize_t		 match_end;	/* exclusive match end offset */
+	double		 score;
 };
 
 static int			 choicecmp(const void *, const void *);
 static void			 delete_between(char *, size_t, size_t, size_t);
 static char			*eager_strpbrk(const char *, const char *);
 static void			 filter_choices(void);
-static void			 get_choices(void);
-static int			 get_key(char *, size_t, size_t *);
-static void			 handle_sigint(int);
+static char			*get_choices(void);
+static enum key			 get_key(char *, size_t, size_t *);
+static __dead void		 handle_sigint(int);
+static void			 handle_sigwinch(int);
 static int			 isu8cont(unsigned char);
 static int			 isu8start(unsigned char);
 static size_t			 min_match(const char *, size_t, ssize_t *,
@@ -78,38 +81,44 @@ static void			 print_line(const char *, size_t, int, ssize_t,
 				    ssize_t);
 static const struct choice	*selected_choice(void);
 static const char		*strcasechr(const char *, const char *);
+static void			 toggle_sigwinch(int);
 static int			 tty_getc(void);
+static const char		*tty_getcap(char *);
 static void			 tty_init(void);
+static const char		*tty_parm1(const char *, int);
 static int			 tty_putc(int);
 static void			 tty_restore(void);
-__dead static void		 usage(void);
+static void			 tty_size(void);
+static __dead void		 usage(void);
 
-static struct termios	 original_attributes;
+static struct termios		 original_attributes;
 static struct {
-	size_t size;
-	size_t length;
-	struct choice *v;
-}			 choices;
-static FILE		*tty_in, *tty_out;
-static char		*query;
-static size_t		 query_length, query_size;
-static int		 descriptions, choices_lines;
-static int		 sort = 1;
-static int		 use_alternate_screen = 1;
+	size_t		 size;
+	size_t		 length;
+	struct choice	*v;
+}				 choices;
+static FILE			*tty_in, *tty_out;
+static char			*query;
+static size_t			 query_length, query_size;
+static volatile sig_atomic_t	 gotsigwinch;
+static int			 descriptions, choices_lines, tty_columns, tty_lines;
+static int			 sort = 1;
+static int			 use_alternate_screen = 1;
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	const struct choice	*choice;
+	char			*input;
 	int			 c;
 	int			 output_description = 0;
+
+	setlocale(LC_CTYPE, "");
 
 #ifdef HAVE_PLEDGE
 	if (pledge("stdio tty rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
 #endif
-
-	setlocale(LC_CTYPE, "");
 
 	while ((c = getopt(argc, argv, "dhoq:SvxX")) != -1)
 		switch (c) {
@@ -134,7 +143,7 @@ main(int argc, char **argv)
 			break;
 		case 'v':
 			puts(PACKAGE_VERSION);
-			exit(EX_OK);
+			exit(0);
 		case 'x':
 			use_alternate_screen = 1;
 			break;
@@ -155,7 +164,7 @@ main(int argc, char **argv)
 			err(1, NULL);
 	}
 
-	get_choices();
+	input = get_choices();
 	tty_init();
 
 #ifdef HAVE_PLEDGE
@@ -171,10 +180,11 @@ main(int argc, char **argv)
 			printf("%s\n", choice->description);
 	}
 
+	free(input);
 	free(choices.v);
 	free(query);
 
-	return EX_OK;
+	return 0;
 }
 
 __dead void
@@ -190,19 +200,19 @@ usage(void)
 	    "    -X          disable alternate screen\n"
 	    "    -q query    supply an initial search query\n");
 
-	exit(EX_USAGE);
+	exit(1);
 }
 
-void
+char *
 get_choices(void)
 {
-	char		*buf, *description, *field_separators, *start, *stop;
+	char		*buf, *description, *ifs, *start, *stop;
 	ssize_t		 n;
 	size_t		 length = 0;
 	size_t		 size = BUFSIZ;
 
-	if ((field_separators = getenv("IFS")) == NULL)
-		field_separators = " ";
+	if ((ifs = getenv("IFS")) == NULL || *ifs == '\0')
+		ifs = " ";
 
 	if ((buf = malloc(size)) == NULL)
 		err(1, NULL);
@@ -219,7 +229,7 @@ get_choices(void)
 			err(1, NULL);
 		size *= 2;
 	}
-	memset(buf + length, '\0', size - length);
+	buf[length] = '\0';
 
 	choices.size = 16;
 	if ((choices.v = reallocarray(NULL, choices.size,
@@ -230,8 +240,7 @@ get_choices(void)
 	while ((stop = strchr(start, '\n')) != NULL) {
 		*stop = '\0';
 
-		if (descriptions &&
-		    (description = eager_strpbrk(start, field_separators)))
+		if (descriptions && (description = eager_strpbrk(start, ifs)))
 			*description++ = '\0';
 		else
 			description = "";
@@ -253,6 +262,8 @@ get_choices(void)
 				    sizeof(struct choice))) == NULL)
 			err(1, NULL);
 	}
+
+	return buf;
 }
 
 char *
@@ -272,10 +283,9 @@ eager_strpbrk(const char *string, const char *separators)
 const struct choice *
 selected_choice(void)
 {
-	size_t	cursor_position, i, j, length;
-	size_t	xscroll = 0;
+	size_t	cursor_position, i, j, length, xscroll;
 	char	buf[6];
-	int	choices_count, key, word_position;
+	int	choices_count, word_position;
 	int	selection = 0;
 	int	yscroll = 0;
 
@@ -286,10 +296,10 @@ selected_choice(void)
 	for (;;) {
 		tty_putp(cursor_invisible, 0);
 		tty_putp(carriage_return, 1);	/* move cursor to first column */
-		if (cursor_position >= xscroll + columns)
+		if (cursor_position >= (size_t)columns)
 			xscroll = cursor_position - columns + 1;
-		if (cursor_position < xscroll)
-			xscroll = cursor_position;
+		else
+			xscroll = 0;
 		print_line(&query[xscroll], query_length - xscroll, 0, -1, -1);
 		choices_count = print_choices(yscroll, selection);
 		if ((size_t)choices_count - yscroll < choices.length
@@ -308,9 +318,14 @@ selected_choice(void)
 			if (tty_putc('\n') == EOF)
 				err(1, "tty_putc");
 			tty_putp(clr_eos, 1);
-			tty_putp(tparm(parm_up_cursor, choices_count + 1), 1);
-		} else {
-			tty_putp(tparm(parm_up_cursor,
+			tty_putp(tty_parm1(parm_up_cursor,
+				    (choices_count - yscroll) + 1), 1);
+		} else if (choices_count > 0) {
+			/*
+			 * parm_up_cursor interprets 0 as 1, therefore only move
+			 * upwards if any choices where printed.
+			 */
+			tty_putp(tty_parm1(parm_up_cursor,
 				    choices_count < choices_lines
 				    ? choices_count : choices_lines), 1);
 		}
@@ -323,12 +338,11 @@ selected_choice(void)
 			 * parm_right_cursor interprets 0 as 1, therefore only
 			 * move the cursor if the position is non zero.
 			 */
-			tty_putp(tparm(parm_right_cursor, j), 1);
+			tty_putp(tty_parm1(parm_right_cursor, j), 1);
 		tty_putp(cursor_normal, 0);
 		fflush(tty_out);
 
-		key = get_key(buf, sizeof(buf), &length);
-		switch (key) {
+		switch (get_key(buf, sizeof(buf), &length)) {
 		case ENTER:
 			if (choices_count > 0)
 				return &choices.v[selection];
@@ -391,6 +405,10 @@ selected_choice(void)
 			filter_choices();
 			selection = yscroll = 0;
 			break;
+		case CTRL_L:
+			tty_size();
+			selection = yscroll = 0;
+			break;
 		case CTRL_W:
 			if (cursor_position == 0)
 				break;
@@ -420,14 +438,14 @@ selected_choice(void)
 		case CTRL_E:
 			cursor_position = query_length;
 			break;
-		case DOWN:
+		case LINE_DOWN:
 			if (selection < choices_count - 1) {
 				selection++;
 				if (selection - yscroll == choices_lines)
 					yscroll++;
 			}
 			break;
-		case UP:
+		case LINE_UP:
 			if (selection > 0) {
 				selection--;
 				if (selection - yscroll < 0)
@@ -445,10 +463,13 @@ selected_choice(void)
 				continue;
 			break;
 		case PAGE_DOWN:
-			if (selection + choices_lines < choices_count)
+			if (selection + choices_lines < choices_count) {
 				yscroll = selection += choices_lines;
-			else
+			} else {
 				selection = choices_count - 1;
+				if (selection - yscroll >= choices_lines)
+					yscroll = choices_count - choices_lines;
+			}
 			break;
 		case PAGE_UP:
 			if (selection - choices_lines > 0)
@@ -456,10 +477,17 @@ selected_choice(void)
 			else
 				yscroll = selection = 0;
 			break;
-		default:
-			if (!isu8start(buf[0]) && !isprint(buf[0]))
-				continue;
-
+		case END:
+			if (choices_count > 0) {
+				selection = choices_count - 1;
+				if (selection - yscroll >= choices_lines)
+					yscroll = choices_count - choices_lines;
+			}
+			break;
+		case HOME:
+			yscroll = selection = 0;
+			break;
+		case PRINTABLE:
 			if (query_length + length >= query_size) {
 				query_size = 2*query_length + length;
 				if ((query = reallocarray(query, query_size,
@@ -478,6 +506,8 @@ selected_choice(void)
 			query[query_length] = '\0';
 			filter_choices();
 			selection = yscroll = 0;
+		case UNKNOWN:
+			break;
 		}
 	}
 }
@@ -566,17 +596,19 @@ min_match(const char *string, size_t offset, ssize_t *start, ssize_t *end)
 		*end = e - string;
 	}
 
-	return length;
+	return *end - *start;
 }
 
 /*
  * Returns a pointer to first occurrence of the first character in s2 in s1 with
- * respect to Unicode characters and disregarding case.
+ * respect to Unicode characters, ANSI escape sequences and disregarding case.
  */
 const char *
 strcasechr(const char *s1, const char *s2)
 {
 	wchar_t	wc1, wc2;
+	size_t	i;
+	int	in_esc_seq, nbytes;
 
 	switch (mbtowc(&wc2, s2, MB_CUR_MAX)) {
 	case -1:
@@ -586,11 +618,26 @@ strcasechr(const char *s1, const char *s2)
 		return NULL;
 	}
 
-	for (; *s1 != '\0'; s1++)
-		if (mbtowc(&wc1, s1, MB_CUR_MAX) == -1)
+	in_esc_seq = 0;
+	for (i = 0; s1[i] != '\0';) {
+		nbytes = 1;
+
+		if (in_esc_seq) {
+			if (s1[i] >= '@' && s1[i] <= '~')
+				in_esc_seq = 0;
+		} else if (i > 0 && s1[i - 1] == '\033' && s1[i] == '[') {
+			in_esc_seq = 1;
+		} else if ((nbytes = mbtowc(&wc1, &s1[i], MB_CUR_MAX)) == -1) {
 			mbtowc(NULL, NULL, MB_CUR_MAX);
-		else if (wcsncasecmp(&wc1, &wc2, 1) == 0)
-			return s1;
+		} else if (wcsncasecmp(&wc1, &wc2, 1) == 0) {
+			return &s1[i];
+		}
+
+		if (nbytes > 0)
+			i += nbytes;
+		else
+			i++;
+	}
 
 	return NULL;
 }
@@ -605,7 +652,10 @@ tty_init(void)
 
 	tcgetattr(fileno(tty_in), &original_attributes);
 	new_attributes = original_attributes;
-	new_attributes.c_lflag &= ~(ICANON | ECHO);
+	new_attributes.c_iflag |= ICRNL;	/* map CR to NL */
+	new_attributes.c_lflag &= ~(ECHO | ICANON | IEXTEN);
+	new_attributes.c_cc[VMIN] = 1;
+	new_attributes.c_cc[VTIME] = 0;
 	tcsetattr(fileno(tty_in), TCSANOW, &new_attributes);
 
 	if ((tty_out = fopen("/dev/tty", "w")) == NULL)
@@ -613,12 +663,15 @@ tty_init(void)
 
 	setupterm((char *)0, fileno(tty_out), (int *)0);
 
-	choices_lines = lines - 1; /* available lines, minus query line */
+	tty_size();
 
 	if (use_alternate_screen)
 		tty_putp(enter_ca_mode, 0);
 
+	tty_putp(keypad_xmit, 0);
+
 	signal(SIGINT, handle_sigint);
+	toggle_sigwinch(0);
 }
 
 int
@@ -627,11 +680,30 @@ tty_putc(int c)
 	return putc(c, tty_out);
 }
 
-void
+__dead void
 handle_sigint(int sig __attribute__((unused)))
 {
 	tty_restore();
-	exit(EX_SIGINT);
+	exit(1);
+}
+
+void
+handle_sigwinch(int sig)
+{
+	gotsigwinch = sig == SIGWINCH;
+}
+
+void
+toggle_sigwinch(int enable)
+{
+	struct sigaction	sa;
+
+	sa.sa_flags = 0;
+	sa.sa_handler = enable ? handle_sigwinch : SIG_IGN;
+	sigemptyset(&sa.sa_mask);
+
+	if (sigaction(SIGWINCH, &sa, NULL) == -1)
+		err(1, "sigaction: SIGWINCH");
 }
 
 void
@@ -640,6 +712,7 @@ tty_restore(void)
 	tcsetattr(fileno(tty_in), TCSANOW, &original_attributes);
 	fclose(tty_in);
 
+	tty_putp(keypad_local, 0);
 	tty_putp(carriage_return, 1);	/* move cursor to first column */
 	tty_putp(clr_eos, 1);
 
@@ -650,65 +723,129 @@ tty_restore(void)
 }
 
 void
-print_line(const char *string, size_t length, int so, ssize_t ulso, ssize_t uleo)
+tty_size(void)
+{
+	const char	*cp;
+	struct winsize	 ws;
+	int		 sz;
+
+	if (ioctl(fileno(tty_in), TIOCGWINSZ, &ws) != -1) {
+		tty_columns = ws.ws_col;
+		tty_lines = ws.ws_row;
+	}
+
+	if (tty_columns == 0)
+		tty_columns = tigetnum("cols");
+	if (tty_lines == 0)
+		tty_lines = tigetnum("lines");
+
+	if ((cp = getenv("COLUMNS")) != NULL &&
+	    (sz = strtonum(cp, 1, INT_MAX, NULL)) > 0)
+		tty_columns = sz;
+	if ((cp = getenv("LINES")) != NULL &&
+	    (sz = strtonum(cp, 1, INT_MAX, NULL)) > 0)
+		tty_lines = sz;
+
+	if (tty_columns == 0)
+		tty_columns = 80;
+	if (tty_lines == 0)
+		tty_lines = 24;
+
+	choices_lines = tty_lines - 1;	/* available lines, minus query line */
+}
+
+void
+print_line(const char *str, size_t len, int standout,
+    ssize_t enter_underline, ssize_t exit_underline)
 {
 	size_t	i;
-	int	c, col, tabwidth;
-	int	in_esc_seq = 0;
-	int	non_printable = 0;
+	wchar_t	wc;
+	int	col, in_esc_seq, nbytes, width;
 
-	if (so)
+	if (standout)
 		tty_putp(enter_standout_mode, 1);
 
-	for (col = i = 0; i < length && col < columns; i++) {
-		if (i == (size_t)ulso)
+	col = i = in_esc_seq = 0;
+	while (col < tty_columns) {
+		if (enter_underline == (ssize_t)i)
 			tty_putp(enter_underline_mode, 1);
+		else if (exit_underline == (ssize_t)i)
+			tty_putp(exit_underline_mode, 1);
+		if (i == len)
+			break;
 
-		/*
-		 * Count the number of outputted ANSI escape sequences
-		 * in order to adjust the column count since they do not
-		 * occupy any screen real-estate.
-		 */
-		if (in_esc_seq) {
-			non_printable++;
-			if (string[i] >= '@' && string[i] <= '~')
-				in_esc_seq = 0;
-		} else if (i > 0 && string[i - 1] == '\033'
-		    && string[i] == '[') {
-			in_esc_seq = 1;
-			non_printable = 2;
-		}
+		if (str[i] == '\t') {
+			width = 8 - (col & 7);	/* ceil to multiple of 8 */
+			if (col + width > tty_columns)
+				break;
+			col += width;
 
-		c = string[i];
-		if (c == '\t') {
-			/* Ceil column count to multiple of 8. */
-			col += tabwidth = 8 - (col & 7);
-			while (tabwidth-- > 0)
+			for (; width > 0; width--)
 				if (tty_putc(' ') == ERR)
 					err(1, "tty_putc");
-		} else {
-			/*
-			 * A null character will be present prior the
-			 * terminating null character if descriptions is
-			 * enabled.
-			 */
-			if (c == '\0')
-				c = ' ';
-			if (!isu8cont(c))
-				col++;
-			if (tty_putc(c) == EOF)
-				err(1, "tty_putc");
+
+			i++;
+			continue;
 		}
 
-		if (i + 1 == (size_t)uleo)
-			tty_putp(exit_underline_mode, 1);
+		/*
+		 * A NUL will be present prior the NUL-terminator if
+		 * descriptions are enabled.
+		 */
+		if (str[i] == '\0') {
+			if (tty_putc(' ') == ERR)
+				err(1, "tty_putc");
+
+			i++, col++;
+			continue;
+		}
+
+		/*
+		 * Due to the explicit NUL-check above, the case where
+		 * mbtowc(3) returns 0 is not handled here.
+		 */
+		if ((nbytes = mbtowc(&wc, &str[i], MB_CUR_MAX)) == -1) {
+			mbtowc(NULL, NULL, MB_CUR_MAX);
+			i++;
+			continue;
+		}
+
+		width = 0;
+		if (i > 0 && str[i - 1] == '\033' && str[i] == '[')
+			/*
+			 * Start of ANSI escape sequence. The previous
+			 * ESC-character already has a zero width but any
+			 * following characters will not consume any columns
+			 * once displayed.
+			 */
+			in_esc_seq = 1;
+		else if (!in_esc_seq && (width = wcwidth(wc)) < 0)
+			/*
+			 * The character is not printable. However, it could be
+			 * an ESC-character marking the the beginning an escape
+			 * sequence so make sure to display every valid
+			 * characters.
+			 */
+			width = 0;
+		else if (str[i] >= '@' && str[i] <= '~')
+			in_esc_seq = 0;
+
+		if (col + width > tty_columns)
+			break;
+		col += width;
+
+		for (; nbytes > 0; nbytes--, i++)
+			if (tty_putc(str[i]) == EOF)
+				err(1, "tty_putc");
 	}
-	for (col -= non_printable; col < columns; col++)
+	for (; col < tty_columns; col++)
 		if (tty_putc(' ') == EOF)
 			err(1, "tty_putc");
 
-	/* If uleo is greater than columns the underline attribute will spill
-	 * over on the next line unless all attributes are exited. */
+	/*
+	 * If exit_underline is greater than columns the underline attribute
+	 * will spill over on the next line unless all attributes are exited.
+	 */
 	tty_putp(exit_attribute_mode, 1);
 }
 
@@ -736,78 +873,104 @@ print_choices(int offset, int selection)
 	return i;
 }
 
-int
+enum key
 get_key(char *buf, size_t size, size_t *nread)
 {
+#define	CAP(k, s)	{ k,	s,	NULL,	0 }
+#define	KEY(k, s)	{ k,	NULL,	s,	sizeof(s) - 1 }
 	static struct {
-		const char	*s;
-		size_t		 length;
-		int		 key;
+		enum key	 key;
+		char		*cap;
+		const char	*str;
+		size_t		 len;
 	}	keys[] = {
-		{ "\n",		1,	ENTER },
-		{ "\r",		1,	ENTER },
-		{ "\177",	1,	BACKSPACE },
-		{ "\001",	1,	CTRL_A },
-		{ "\002",	1,	LEFT },
-		{ "\004",	1,	DEL },
-		{ "\005",	1,	CTRL_E },
-		{ "\006",	1,	RIGHT },
-		{ "\013",	1,	CTRL_K },
-		{ "\016",	1,	DOWN },
-		{ "\020",	1,	UP },
-		{ "\025",	1,	CTRL_U },
-		{ "\027",	1,	CTRL_W },
-		{ "\033\n",	2,	ALT_ENTER },
-		{ "\033\r",	2,	ALT_ENTER },
-		{ "\033[A",	3,	UP },
-		{ "\033OA",	3,	UP },
-		{ "\033[B",	3,	DOWN },
-		{ "\033OB",	3,	DOWN },
-		{ "\033[C",	3,	RIGHT },
-		{ "\033OC",	3,	RIGHT },
-		{ "\033[D",	3,	LEFT },
-		{ "\033OD",	3,	LEFT },
-		{ "\033[3~",	4,	DEL },
-		{ "\033O3~",	4,	DEL },
-		{ "\033[6~",	4,	PAGE_DOWN },
-		{ "\033[5~",	4,	PAGE_UP },
-		{ NULL,		0,	0 },
+		KEY(ALT_ENTER,	"\033\n"),
+		KEY(BACKSPACE,	"\177"),
+		KEY(BACKSPACE,	"\b"),
+		KEY(CTRL_A,	"\001"),
+		KEY(CTRL_E,	"\005"),
+		KEY(CTRL_K,	"\013"),
+		KEY(CTRL_L,	"\014"),
+		KEY(CTRL_U,	"\025"),
+		KEY(CTRL_W,	"\027"),
+		CAP(DEL,	"kdch1"),
+		KEY(DEL,	"\004"),
+		CAP(END,	"kend"),
+		KEY(END,	"\033>"),
+		KEY(ENTER,	"\n"),
+		CAP(HOME,	"khome"),
+		KEY(HOME,	"\033<"),
+		CAP(LEFT,	"kcub1"),
+		KEY(LEFT,	"\002"),
+		CAP(LINE_DOWN,	"kcud1"),
+		KEY(LINE_DOWN,	"\016"),
+		CAP(LINE_UP,	"kcuu1"),
+		KEY(LINE_UP,	"\020"),
+		CAP(PAGE_DOWN,	"knp"),
+		KEY(PAGE_DOWN,	"\026"),
+		CAP(PAGE_UP,	"kpp"),
+		KEY(PAGE_UP,	"\033v"),
+		CAP(RIGHT,	"kcuf1"),
+		KEY(RIGHT,	"\006"),
+		KEY(UNKNOWN,	NULL),
 	};
 	int	c, i;
 
 	*nread = 0;
-getc:
+
+	/*
+	 * Allow SIGWINCH on the first read. If the signal is received, return
+	 * CTRL_L which will trigger a resize.
+	 */
+	toggle_sigwinch(1);
 	buf[(*nread)++] = tty_getc();
-	size--;
-	for (i = 0; keys[i].s != NULL; i++) {
-		if (*nread > keys[i].length
-		    || strncmp(buf, keys[i].s, *nread) != 0)
-			continue;
+	toggle_sigwinch(0);
+	if (gotsigwinch) {
+		gotsigwinch = 0;
+		return CTRL_L;
+	}
 
-		if (*nread == keys[i].length)
-			return keys[i].key;
+	for (;;) {
+		for (i = 0; keys[i].key != UNKNOWN; i++) {
+			if (keys[i].str == NULL) {
+				keys[i].str = tty_getcap(keys[i].cap);
+				keys[i].len = strlen(keys[i].str);
+			}
+			if (strncmp(keys[i].str, buf, *nread) != 0)
+				continue;
 
-		/* Partial match found, continue reading. */
-		if (size > 0)
-			goto getc;
+			if (*nread == keys[i].len)
+				return keys[i].key;
+
+			/* Partial match found, continue reading. */
+			break;
+		}
+		if (keys[i].key == UNKNOWN)
+			break;
+
+		if (size-- == 0)
+			break;
+		buf[(*nread)++] = tty_getc();
 	}
 
 	if (*nread > 1 && buf[0] == '\033' && (buf[1] == '[' || buf[1] == 'O')) {
 		/*
-		 * A escape sequence which is not a supported key is being read.
-		 * Discard the rest of the sequence.
+		 * An escape sequence which is not a supported key is being
+		 * read. Discard the rest of the sequence.
 		 */
-		for (;;) {
+		c = buf[(*nread) - 1];
+		while (c < '@' || c > '~')
 			c = tty_getc();
-			if (c >= '@' && c <= '~')
-				break;
-		}
 
 		return UNKNOWN;
 	}
 
-	if (!isu8start(buf[0]))
+	if (!isu8start(buf[0])) {
+		if (isprint(buf[0]))
+			return PRINTABLE;
+
 		return UNKNOWN;
+	}
 
 	/*
 	 * Ensure a whole Unicode character is read. The number of MSBs in the
@@ -815,10 +978,17 @@ getc:
 	 * the character consists of, followed by a zero. Therefore, as long as
 	 * the MSB is not zero there is still bytes left to read.
 	 */
-	while ((((unsigned int)buf[0] << *nread) & 0x80) == 0x80 && size-- > 0)
-		buf[(*nread)++] = tty_getc();
+	for (;;) {
+		if ((((unsigned int)buf[0] << *nread) & 0x80) == 0)
+			break;
+		if (size == 0)
+			return UNKNOWN;
 
-	return UNKNOWN;
+		buf[(*nread)++] = tty_getc();
+		size--;
+	}
+
+	return PRINTABLE;
 }
 
 int
@@ -826,10 +996,28 @@ tty_getc(void)
 {
 	int	c;
 
-	if ((c = getc(tty_in)) == ERR)
+	if ((c = getc(tty_in)) == ERR && !gotsigwinch)
 		err(1, "getc");
 
 	return c;
+}
+
+const char *
+tty_getcap(char *cap)
+{
+	char	*str;
+
+	str = tigetstr(cap);
+	if (str == (char *)(-1) || str == NULL)
+		return "";
+
+	return str;
+}
+
+const char *
+tty_parm1(const char *cap, int a)
+{
+	return tparm((char *)cap, a, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
 void

@@ -50,11 +50,15 @@ Disable the use of the alternate screen terminal feature.
 .Bl -tag -width XXXX
 .It Ic Ctrl-C
 Exit with a erroneous status without outputting the selected choice.
+.It Ic Ctrl-L
+Redraw interface with respect to the current size of the terminal.
 .It Ic Up/Down | Ctrl-P/Ctrl-N
 Select between choices matching the current search query.
-.It Ic Page-Down/Page-Up
+.It Ic Page-Down/Page-Up | Ctrl-V/Alt-V
 Move the selection to the choice located one page down/up from the currently
 selected choice.
+.It Ic Home/End | Alt-</Alt->
+Move the selection to the first/last choice matching the current search query.
 .It Ic Enter
 Output the currently selected choice and exit.
 .It Ic Alt-Enter
@@ -65,7 +69,7 @@ Move the cursor left and right in the search query input field.
 Move the cursor to the beginning of the line in the search query input field.
 .It Ic Ctrl-E
 Move the cursor to the end of the line in the search query input field.
-.It Ic Backspace
+.It Ic Backspace | Ctrl-H
 Delete one character to the left of the cursor in the search query input field.
 .It Ic Delete | Ctrl-D
 Delete the character under the cursor in the search query input field.
@@ -85,6 +89,11 @@ The following environment variables will affect the execution of
 .Bl -tag -width IFS
 .It Ev IFS
 Determines the separator used between choices and descriptions.
+.El
+.Sh ASYNCHRONOUS EVENTS
+.Bl -tag -width "SIGWINCH"
+.It Dv SIGWINCH
+The screen is resized.
 .El
 .Sh EXAMPLES
 Select a file in the current directory to open using

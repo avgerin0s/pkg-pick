@@ -12,22 +12,23 @@
 #include <string.h>
 #include <unistd.h>
 
-static void	 child(int, int);
-static void	 parent(int, int, const char *);
-static char	*parsekeys(const char *);
-static void	 sighandler(int);
-static void	 usage(void);
+#include "compat.h"
+
+__dead static void	 child(int, int);
+static void		 parent(int, int, const char *);
+static char		*parsekeys(const char *);
+static void		 sighandler(int);
+__dead static void	 usage(void);
 
 static char		**pickargv;
 /*
  * Mandatory environment variables required by pick to operate correctly.
- * If any of these variables is absent in the current environment, they will be
- * defined using the corresponding value.
+ * Any existing value will be overwritten.
  */
 static const char	 *pickenv[] = {
 	"LC_CTYPE",		"en_US.UTF-8",
-	"MALLOC_OPTIONS",	"S",	/* malloc.conf(5) options on OpenBSD */
-	"TERM",			"vt100",
+	"MALLOC_OPTIONS",	"S",		/* malloc.conf(5) options on OpenBSD */
+	"TERM",			"xterm",
 	NULL,
 };
 static int		  gotsig;
@@ -88,46 +89,48 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-static void
+__dead static void
 usage(void)
 {
-	fprintf(stderr, "usage: pick-test [-k keys] [-- argument ...]\n");
+	fprintf(stderr, "usage: pick-test [-k path] [-- argument ...]\n");
 	exit(1);
 }
 
 static char *
-parsekeys(const char *s)
+parsekeys(const char *path)
 {
+	FILE	*fh;
 	char	*buf;
 	size_t	 len = 0;
 	size_t	 size = 16;
-	int	 c;
+	int	 c, esc;
+
+	if ((fh = fopen(path, "r")) == NULL)
+		err(1, "fopen: %s", path);
 
 	if ((buf = malloc(size)) == NULL)
 		err(1, NULL);
 
-	for (; (c = *s) != '\0'; s++) {
+	esc = 0;
+	while ((c = fgetc(fh)) != EOF) {
 		if (c == '\\') {
-			switch (*++s) {
-			case 'n':
-				c = '\n';
-				break;
-			default:
-				c = *s;
-			}
-		} else if (c == ' ') {
+			esc = 1;
+		} else if (!esc && c == ' ') {
 			continue;
+		} else {
+			buf[len++] = c;
+			esc = 0;
 		}
-		buf[len++] = c;
 
 		if (size <= len) {
-			if (size > ULONG_MAX/2)
-				errx(1, "buffer size overflow");
-			if ((buf = realloc(buf, 2*size)) == NULL)
+			if ((buf = reallocarray(buf, 2, size)) == NULL)
 				err(1, NULL);
 			size *= 2;
 		}
 	}
+	if (ferror(fh))
+		err(1, "fgetc: %s", path);
+	fclose(fh);
 	buf[len] = '\0';
 
 	return buf;
@@ -139,7 +142,7 @@ sighandler(int sig)
 	gotsig = sig == SIGCHLD;
 }
 
-static void
+__dead static void
 child(int master, int slave)
 {
 	const char	**env;
@@ -167,12 +170,13 @@ child(int master, int slave)
 	 * Set window size to known dimensions, necessary in order to deduce
 	 * when scrolling should occur.
 	 */
+	memset(&ws, 0, sizeof(ws));
 	ws.ws_col = 80, ws.ws_row = 24;
 	if (ioctl(slave, TIOCSWINSZ, &ws) == -1)
 		err(1, "TIOCSWINSZ");
 
 	for (env = pickenv; *env != NULL; env += 2)
-		if (setenv(env[0], env[1], 0) == -1)
+		if (setenv(env[0], env[1], 1) == -1)
 			err(1, "setenv: %s", env[0]);
 
 	execv(pickargv[0], pickargv);
