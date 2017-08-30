@@ -6,8 +6,12 @@ Files: *
 Copyright: Copyright (c) 2016 Calle Erlandsson, Anton Lindqvist & thoughtbot.
 License: MIT
 
-Files: compat.c
+Files: compat-reallocarray.c
 Copyright: Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
+License: ISC
+
+Files: compat-strtonum.c
+Copyright: Copyright (c) 2004 Ted Unangst and Todd Miller
 License: ISC
 
 Files: debian/*
