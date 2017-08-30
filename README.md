@@ -7,17 +7,6 @@ using an interface with fuzzy search functionality.
 
 ## Installation
 
-### Arch Linux
-
-A package for Pick is available in [the AUR].
-
-```sh
-curl -O https://aur.archlinux.org/cgit/aur.git/snapshot/pick.tar.gz
-tar -xzf pick.tar.gz
-cd pick
-makepkg -sri
-```
-
 ### Debian and Ubuntu
 
 A package for Pick is available as of [Debian 9] and [Ubuntu 15.10].
@@ -51,6 +40,10 @@ make install clean
 pkg install pick
 ```
 
+### OpenBSD
+
+Available in ports under `sysutils/pick`.
+
 ### From source
 
 1. Download the latest release from [the releases page], optionally check the
@@ -70,7 +63,6 @@ cd pick-VERSION
 less INSTALL.md
 ```
 
-[the AUR]: https://aur.archlinux.org/packages/pick/
 [Debian 9]: https://packages.debian.org/stretch/pick
 [Ubuntu 15.10]: http://packages.ubuntu.com/wily/pick
 [the releases page]: https://github.com/calleerlandsson/pick/releases/
@@ -99,4 +91,4 @@ See the `pick(1)` man page for detailed usage instructions and more examples.
 
 ## Copyright
 
-Copyright (c) 2016 Calle Erlandsson, Anton Lindqvist & thoughtbot.
+Copyright (c) 2017 Calle Erlandsson, Anton Lindqvist & thoughtbot.

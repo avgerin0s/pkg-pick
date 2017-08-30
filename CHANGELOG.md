@@ -1,4 +1,150 @@
-# vX.Y.Z - YYYY-MM-DD
+# v1.8.0 - 2017-08-28
+
+## New features
+
+- Read arrow keys from the `terminfo(3)` database.
+  (0c3369b, 2d57016, #206)
+  (Jenz Guenther)
+
+- Add support for `SIGWINCH`.
+  (7cdafc8, 5491427, b630f0d, 5969e96, 50e9645, #213)
+  (Anton Lindqvist, Jenz Guenther)
+
+## Bug fixes
+
+- Declare functions as `__dead` when appropriate in `pick-test(1)`.
+  Discovered while compiling using GCC 7.
+  (bf666ed, dd29ca2, #202, #204)
+  (Anton Lindqvist)
+
+- Make sure `$IFS` is not an empty string.
+  (e894dd0)
+  (Anton Lindqvist)
+
+- Disable `IEXTEN` to solve `Ctrl-V` conflict.
+  (8a70fe7)
+  (Anton Lindqvist)
+
+- Declare functions as `__dead` when appropriate.
+  (91d7bba, #210)
+  (Jenz Guenther)
+
+- Always pass 9 parameters to `tparm(3)`.
+  Partial fix to make pick compile on NetBSD.
+  (d3a158d, #216, #218)
+  (Anton Lindqvist, Jenz Guenther)
+
+- Ensure blocking read in non-canonical mode.
+  (98a8779, #219)
+  (Jenz Guenther)
+
+- Prefix `UP` (and `DOWN` for consistency) since it's already defined on NetBSD.
+  Partial fix to make pick compile on NetBSD.
+  (1cdf592, #216)
+  (Anton Lindqvist, Jenz Guenther)
+
+- Use compound-list in `pick-test.sh` for POSIX compatibility.
+  (716fc0a, #224)
+  (Jenz Guenther)
+
+- Fix and simplify horisontal scrolling.
+  (1ef7970, #230)
+  (Anton Lindqvist, Jenz Guenther)
+
+- Fix scroll up bug.
+  (50e2748, #232)
+  (Anton Lindqvist, Jenz Guenther)
+
+- Always favor the shortest match.
+  This bug only occurs when a choice contains multiple instances of the query
+  and the right-most match is the shortest one.
+  (d7d25a8, #233)
+  (Anton Lindqvist)
+
+## Changes
+
+- Use `reallocarray(3)` in `pick-test(1)`.
+  (58b17e0, 478e715)
+  (Anton Lindqvist)
+
+- Run `cppcheck(1)` and Coverity Scan on Travis.
+  (1560686, f493b93)
+  (Anton Lindqvist)
+
+- NUL-terminate the input buffer by assignment rather than using `memset(3)`.
+  (3e04320)
+  (Anton Lindqvist)
+
+- Update documentation on development and contributing.
+  (50e2176, #214)
+  (Anton Lindqvist)
+
+- Lower requirements for autoconf and automake.
+  Makes it possible to compile pick on Debian 5.
+  (054b323, #220)
+  (Jenz Guenther)
+
+# v1.7.0 - 2017-06-30
+
+## New features
+
+- Add support for HOME and END keys (10f04ae, 0a545bc, 1402ecc, #195) (Jenz
+  Guenther)
+
+- Read keys from the `terminfo(3)` database, currently limited to HOME and END
+  (19ff2ea, 71f9505, 1ee1a1d, b8857fd, #197) (Anton Lindqvist)
+
+- Add support for Ctrl-V/Alt-V and Alt-</Alt-> alternative key bindings for HOME
+  and END, and Page-Down and Page-Up respectively (128418a, #201) (Jenz
+  Guenther)
+
+## Bug fixes
+
+- Don't move the cursor upwards if no choices where printed (ecdca3d, #196,
+  #198) (Anton Lindqvist)
+
+- Selection bar vanishes on Page-Down (92e492b, #199, #200) (Jenz Guenther)
+
+## Changes
+
+- Refactoring and cleanup (74aa733, 5b237d3, bfe26ae, c16475f, 7b99e29, #189)
+  (Anton Lindqvist)
+
+- Run `mandoc(1)` and UBSan on Travis (f37e5e8, 368d37d, #190, #193) (Anton
+  Lindqvist)
+
+- Update test suite documentation (9086de2) (Anton Lindqvist)
+
+- Enable `ICRNL` input mode (61a5ae5, #192) (Anton Lindqvist)
+
+# v1.6.1 - 2017-04-24
+
+## Bug fixes
+
+- Fix tab output bug (db2d9f4) (Anton Lindqvist)
+
+# v1.6.0 - 2017-04-19
+
+## Bug fixes
+
+- Fix memory leak (63c7da5) (Anton Lindqvist)
+
+- Postpone initial pledge call (bb0ef4f) (Anton Lindqvist)
+
+- Don't match strings inside escape sequences (3c0b407) (Anton Lindqvist)
+
+- Calculate the width of each displayed character (369350b, #184, #185) (Anton
+  Lindqvist)
+
+- Define `_GNU_SOURCE` in order to make `wcwidth(3)` available on Linux
+  (ffb4ca4, #185) (Anton Lindqvist)
+
+## New features
+
+- Test suite improvements (5c339d8, 2a5196a, 618a490, fd824f5) (Anton Lindqvist)
+
+- Exit with `0` on success and `1` on failure instead of using the exit codes
+  defined in `sysexits.h` (e3a5207, #183) (Anton Lindqvist)
 
 # v1.5.4 - 2017-01-23
 

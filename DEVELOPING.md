@@ -1,61 +1,97 @@
-Developing
-==========
+# Developing
 
-Setup
------
+## Contributing
 
-To build from a fresh checkout:
+We love pull requests from everyone.
+By participating in this project,
+you agree to abide by its [Code of Conduct][conduct].
 
-    ./autogen.sh
-    ./configure
-    make
+1. Fork and clone the repo.
 
-Editing
--------
+2. Build and make sure all tests pass:
 
-Use these Vim settings for the correct indention and formatting:
+   ```sh
+   $ ./autogen.sh
+   $ ./configure
+   $ make check
+   ```
 
-```
-setlocal sw=0 ts=8 noet
-setlocal cinoptions=:0,t0,+4,(4
-```
+3. Make your changes.
 
-Release
--------
+   Respect the existing formatting and indentation,
+   when in doubt consult [style(9)][style].
 
-1. Update the version in `configure.ac`:
+4. If your changes can be captured by a [test],
+   make sure to add one.
+   Changes that only concern the interface can be harder to test but feel free
+   to ask for help.
 
-        AC_INIT([pick], [0.0.2], [pick-maintainers@calleerlandsson.com])
+   Again,
+   make sure all tests still pass.
 
-2. Verify the tarball:
+5. If your changes for instance adds an option or key binding,
+   make sure to update the [manual].
 
-        make distcheck
-        tar -ztf pick-0.0.2.tar.gz | less
+6. Submit a pull request on GitHub.
+   This will in addition to sharing your work run it through our continuous
+   integration which performs both static and runtime analysis in order to catch
+   bugs early on.
 
-3. Tag the repo:
+7. At this point you're waiting on us.
 
-        git checkout master
-        git pull --rebase
-        git push origin master
-        git status
-        git tag --sign -m "v0.0.2" v0.0.2
-        git push origin master --tags
+## Release
 
-4. Sign the tarball:
+1. Run Coverity Scan.
+   In the case of discovered defects,
+   perform a fix and redo this step until no further defects are detected.
 
-        gpg -sab pick-0.0.2.tar.gz
+   ```sh
+   $ git checkout coverity_scan
+   $ git rebase master
+   $ git push origin coverity_scan
+   ```
 
-5. Verify the signature:
+2. Update the version in `configure.ac`:
 
-        gpg --verify pick-0.0.2.tar.gz.asc pick-0.0.2.tar.gz
+   ```
+   AC_INIT([pick], [0.0.2], [pick-maintainers@calleerlandsson.com])
+   ```
 
-6. [Announce the release on
-   GitHub](https://github.com/calleerlandsson/pick/releases/new).
+3. Verify the tarball:
+
+   ```sh
+   $ make distcheck
+   $ tar -ztf pick-0.0.2.tar.gz
+   ```
+
+4. Tag the repo:
+
+   ```sh
+   $ git checkout master
+   $ git pull --rebase
+   $ git push origin master
+   $ git status
+   $ git tag -m "v0.0.2" v0.0.2
+   $ git push origin master --tags
+   ```
+
+5. Generate checksum:
+
+   ```sh
+   $ sha256 pick-0.0.2.tar.gz >pick-0.0.2.sha256
+   ```
+
+6. [Announce the release on GitHub][announce].
 
 7. Contact package maintainers:
 
-* Aggelos Avgerinos <evaggelos.avgerinos@gmail.com> (Debian & Ubuntu)
-* Calle Erlandsson <calle@calleerlandsson.com> (Arch Linux)
-* Chunyang Xu <xuchunyang.me@gmail.com> (MacPorts)
-* Fredrik Fornwall <fredrik@fornwall.net> (Homebrew)
-* Neel Chauhan <neel@neelc.org> (FreeBSD)
+  * Aggelos Avgerinos <evaggelos.avgerinos@gmail.com> (Debian & Ubuntu)
+  * Chunyang Xu <xuchunyang.me@gmail.com> (MacPorts)
+  * Fredrik Fornwall <fredrik@fornwall.net> (Homebrew)
+  * Neel Chauhan <neel@neelc.org> (FreeBSD)
+
+[announce]: https://github.com/calleerlandsson/pick/releases/new
+[conduct]: https://github.com/calleerlandsson/pick/blob/master/CODE_OF_CONDUCT.md
+[manual]: https://github.com/calleerlandsson/pick/tree/master/pick.1
+[style]: https://man.openbsd.org/style
+[test]: https://github.com/calleerlandsson/pick/tree/master/tests#test-suite
