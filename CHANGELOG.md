@@ -1,3 +1,121 @@
+# v2.0.1 - 2018-01-01
+
+## Bug fixes
+
+- Typing a query fast could yield incorrect results.
+  (494ce29, #268, #270)
+  (Anton Lindqvist, Jenz Guenther)
+
+# v2.0.0 - 2017-11-07
+
+## New features
+
+- Add `Ctrl-O` key binding used to toggle sorting.
+  (d36423b)
+  (Anton Lindqvist)
+
+## Bug fixes
+
+- Inline `CCEQ` macro since it's missing in musl libc.
+  (21f16d0, #249, #250)
+  (Anton Lindqvist, Michael Gehring)
+
+- Ignore OSC escape sequences while calculating the line width and filtering.
+  (e821307, a380b41, #248)
+  (Anton Lindqvist)
+
+- Do not ignore return value from `mbtowc(3)`.
+  Fixes an issue discovered while compiling using GCC 4.7 on Debian 7.
+  (274969a, #255)
+  (Jenz Guenther)
+
+- Fix exit code for `-h` option.
+  (f833b3a)
+  (Anton Lindqvist)
+
+## Changes
+
+- Optimize filtering by safely reducing the number of choices to reconsider
+  when the query grew longer.
+  (c0c18ef, #251)
+  (Anton Lindqvist)
+
+- Replace example in manual with a more portable but equally useful one.
+  (ad57355, 031817f, 871ddd9, #253)
+  (Jenz Guenther)
+
+- pick is now available as a package on Void Linux.
+  (dce2ddf, #257)
+  (Michael Gehring)
+
+- pick is now available as a package on CRUX.
+  (26eea32, #258)
+  (rtlanceroad)
+
+- Only redraw the choices when necessary.
+  (1e8fb53, #254, #264)
+  (Anton Lindqvist, Jenz Guenther)
+
+# v1.9.0 - 2017-09-19
+
+## New features
+
+- Add `-K` option used to disable toggling of keyboard transmit mode.
+  Fixes a bug causing the arrow keys to stop working after running pick from
+  within Vim.
+  (6fca1c4, #246, #247)
+  (Anton Lindqvist)
+
+## Bug fixes
+
+- Fix a path issue related to `make distcheck`.
+  (9034255, #242)
+  (Anton Lindqvist)
+
+- Do not reset the selection on redraw.
+  (58c5b46, #221)
+  (Anton Lindqvist, Jenz Guenther)
+
+- Explicitly handle `Ctrl-{C,Z}` control characters.
+  The previous `SIGINT` handler was broken since it invokes functions that are
+  not considered asynchronous safe.
+  Instead,
+  do not turn control characters into signal but instead handle the relevant
+  ones.
+  A pleasant side-effect is that suspend/resumes now behaves correctly.
+  (9886750, #240)
+  (Anton Lindqvist)
+
+## Changes
+
+- Make `Ctrl-W` implement the ALTWERASE algorithm,
+  a sequence of alphanumeric and underscore characters are recognized as a word.
+  (c1e0a91, #231, #234)
+  (Anton Lindqvist, Jenz Guenther)
+
+- Add clang 5.0 to the build matrix on Travis.
+  (2092491)
+  (Anton Lindqvist)
+
+- Recognize `Alt-Backspace` as an alias for `Ctrl-W` and `Alt-Space` for
+  `Page-Down`.
+  Borrowed from `less(1)`.
+  (7d0a568, #238)
+  (Jenz Guenther)
+
+- Improve the semantics of the manual and clarify a few things.
+  (6713d37, 964b75b, 78a02b6)
+  (Anton Lindqvist)
+
+- Fallback to pkg-config(1) while looking for ncurses library.
+  Makes pick build on Gentoo where ncurses and libtinfo are split out.
+  (615c536, #241)
+  (Anton Lindqvist, Mike Burns, Tim Harder)
+
+- pick is now available as a package on Gentoo.
+  (99d5a6f, #243, #244)
+  (Tim Harder)
+
 # v1.8.0 - 2017-08-28
 
 ## New features
