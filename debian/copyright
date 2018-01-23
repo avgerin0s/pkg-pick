@@ -3,7 +3,7 @@ Upstream-Name: pick
 Source: https://github.com/caleerlandsson/pick
 
 Files: *
-Copyright: Copyright (c) 2016 Calle Erlandsson, Anton Lindqvist & thoughtbot.
+Copyright: Copyright (c) 2017 Calle Erlandsson, Anton Lindqvist & thoughtbot.
 License: MIT
 
 Files: compat-reallocarray.c
