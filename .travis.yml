@@ -10,11 +10,23 @@ matrix:
       compiler: clang
       env: BUILD_TYPE=default CFLAGS='-fsanitize=address -fsanitize=undefined'
     - os: linux
+      compiler: clang-5.0
+      env: BUILD_TYPE=default CFLAGS='-fsanitize=address -fsanitize=undefined'
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-5.0
+          packages:
+            - clang-5.0
+    - os: linux
       compiler: gcc
       env: BUILD_TYPE=default CFLAGS=-fsanitize=address
     - os: osx
       compiler: clang
       env: BUILD_TYPE=default CFLAGS=-fsanitize=address
+    - os: linux
+      compiler: clang
+      env: BUILD_TYPE=coverage CFLAGS='-coverage -O0'
     - os: linux
       compiler: clang
       env: BUILD_TYPE=coverity
@@ -39,24 +51,36 @@ before_install:
 install:
   - |
     if [ $BUILD_TYPE = mandoc ]; then
+      brew update
       brew install mandoc
     fi
 script:
   - |
-    if [ $BUILD_TYPE = default ]; then
+    (
+    set -ex
+    case $BUILD_TYPE in
+    default)
       ./autogen.sh
       ./configure || (cat config.log; exit 1)
-      make || exit 1
+      make
       make distcheck || (find . -name test-suite.log | xargs -t cat; exit 1)
-    fi
-  - |
-    if [ $BUILD_TYPE = cppcheck ]; then
+      ;;
+    coverage)
+      ./autogen.sh
+      ./configure || (cat config.log; exit 1)
+      make
+      make check || (find . -name test-suite.log | xargs -t cat; exit 1)
+      llvm-cov gcov pick-pick.c
+      bash <(curl -s https://codecov.io/bash)
+      ;;
+    cppcheck)
       git ls-files | grep '\.c$' | cppcheck --quiet --error-exitcode=1 --file-list=-
-    fi
-  - |
-    if [ $BUILD_TYPE = mandoc ]; then
-      mandoc -Tlint pick.1
-    fi
+      ;;
+    mandoc)
+      mandoc -Tlint -Wstyle pick.1
+      ;;
+    esac
+    )
 addons:
   coverity_scan:
     project:

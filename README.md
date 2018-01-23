@@ -7,12 +7,33 @@ using an interface with fuzzy search functionality.
 
 ## Installation
 
+### CRUX
+
+Available in [`6c37/crux-ports`][crux].
+
 ### Debian and Ubuntu
 
-A package for Pick is available as of [Debian 9] and [Ubuntu 15.10].
+A package for Pick is available As of [Debian 9][debian]
+and [Ubuntu 16.04 LTS][ubuntu].
 
 ```sh
 apt-get install pick
+```
+
+### Gentoo
+
+Package is available from the [official repo][gentoo].
+
+```sh
+emerge pick
+```
+
+### Void Linux
+
+Package is available from the [official repo][void].
+
+```sh
+xbps-install pick
 ```
 
 ### Mac OS X via Homebrew
@@ -42,30 +63,25 @@ pkg install pick
 
 ### OpenBSD
 
-Available in ports under `sysutils/pick`.
+```sh
+pkg_add pick
+```
 
 ### From source
 
-1. Download the latest release from [the releases page], optionally check the
-   signature and extract the archive:
+Download the latest [release] and follow the bundled instructions in
+`INSTALL.md`.
 
-```sh
-wget https://github.com/calleerlandsson/pick/releases/download/vVERSION/pick-VERSION.tar.gz
-wget https://github.com/calleerlandsson/pick/releases/download/vVERSION/pick-VERSION.tar.gz.asc
-gpg --verify pick-VERSION.tar.gz.asc
-tar -xzf pick-VERSION.tar.gz
-```
+If you want to try the latest unreleased version,
+follow the instructions in [CONTRIBUTING.md][current].
 
-2. Follow the bundled installation instructions:
-
-```sh
-cd pick-VERSION
-less INSTALL.md
-```
-
-[Debian 9]: https://packages.debian.org/stretch/pick
-[Ubuntu 15.10]: http://packages.ubuntu.com/wily/pick
-[the releases page]: https://github.com/calleerlandsson/pick/releases/
+[crux]: https://github.com/6c37/crux-ports
+[current]: https://github.com/calleerlandsson/pick/blob/master/CONTRIBUTING.md
+[debian]: https://packages.debian.org/stretch/pick
+[gentoo]: https://packages.gentoo.org/packages/sys-apps/pick
+[release]: https://github.com/calleerlandsson/pick/releases/
+[ubuntu]: https://packages.ubuntu.com/xenial/pick
+[void]: https://github.com/voidlinux/void-packages/blob/master/srcpkgs/pick/template
 
 ## Usage
 
@@ -74,7 +90,8 @@ less INSTALL.md
 
 ```sh
 git ls-files | pick | xargs less # Select a file in the current git repository to view in less
-cd $(find . -type d | pick)      # Select a directory to cd into
+cd "$(find . -type d | pick)"    # Select a directory to cd into
+eval $(fc -ln 1 | pick)          # Select a command from the history to execute
 ```
 
 Pick can also easily be used from within Vim both using `system()` and `!`. For
