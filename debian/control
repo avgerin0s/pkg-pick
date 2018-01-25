@@ -2,7 +2,7 @@ Source: pick
 Section: misc
 Priority: optional
 Maintainer: Aggelos Avgerinos <evaggelos.avgerinos@gmail.com>
-Build-Depends: debhelper(>= 11), libncurses5-dev
+Build-Depends: debhelper(>= 11), libncurses5-dev, pkg-config
 Standards-Version: 4.1.3
 Homepage: https://github.com/calleerlandsson/pick
 Vcs-Git: https://github.com/eavgerinos/pkg-pick.git
