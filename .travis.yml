@@ -1,4 +1,5 @@
-sudo: false
+# TODO: temporary work-around permission issue with Clang sanitizers.
+sudo: true
 dist: trusty
 language: c
 env:
@@ -8,10 +9,10 @@ matrix:
   include:
     - os: linux
       compiler: clang
-      env: BUILD_TYPE=default CFLAGS='-fsanitize=address -fsanitize=undefined'
+      env: BUILD_TYPE=default CFLAGS='-fsanitize=address -fsanitize=undefined -Werror'
     - os: linux
       compiler: clang-5.0
-      env: BUILD_TYPE=default CFLAGS='-fsanitize=address -fsanitize=undefined'
+      env: BUILD_TYPE=default CFLAGS='-fsanitize=address -fsanitize=undefined -Werror'
       addons:
         apt:
           sources:
@@ -19,14 +20,24 @@ matrix:
           packages:
             - clang-5.0
     - os: linux
+      compiler: clang-6.0
+      env: BUILD_TYPE=default CFLAGS='-fsanitize=address -fsanitize=undefined -Werror'
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-6.0
+            - ubuntu-toolchain-r-test
+          packages:
+            - clang-6.0
+    - os: linux
       compiler: gcc
-      env: BUILD_TYPE=default CFLAGS=-fsanitize=address
+      env: BUILD_TYPE=default CFLAGS='-fsanitize=address -Werror'
     - os: osx
       compiler: clang
-      env: BUILD_TYPE=default CFLAGS=-fsanitize=address
+      env: BUILD_TYPE=default CFLAGS='-fsanitize=address -Werror'
     - os: linux
       compiler: clang
-      env: BUILD_TYPE=coverage CFLAGS='-coverage -O0'
+      env: BUILD_TYPE=coverage CFLAGS='-coverage -O0 -Werror'
     - os: linux
       compiler: clang
       env: BUILD_TYPE=coverity
@@ -84,7 +95,7 @@ script:
 addons:
   coverity_scan:
     project:
-      name: calleerlandsson/pick
+      name: mptre/pick
       description: a fuzzy search tool for the command-line
     notification_email: pick-maintainers@calleerlandsson.com
     build_command_prepend: ./autogen.sh; ./configure

@@ -1,9 +1,23 @@
-# Pick
+# pick
 
 ![pick(1) usage](screencast.gif)
 
-The `pick(1)` utility allows users to choose one option from a set of choices
-using an interface with fuzzy search functionality.
+[pick(1)][pick]
+reads a list of choices from `stdin` and outputs the selected choice to
+`stdout`.
+Therefore it is easily used both in pipelines and subshells:
+
+```sh
+# Select a file in the current directory to open using xdg-open(1):
+$ find . -type f | pick | xargs xdg-open
+# Select a command from the history to execute:
+$ eval $(fc -ln 1 | pick)
+```
+
+[pick(1)][pick] can also be used from within Vim,
+see the
+[pick.vim][pick-vim]
+plugin.
 
 ## Installation
 
@@ -75,37 +89,16 @@ Download the latest [release] and follow the bundled instructions in
 If you want to try the latest unreleased version,
 follow the instructions in [CONTRIBUTING.md][current].
 
-[crux]: https://github.com/6c37/crux-ports
-[current]: https://github.com/calleerlandsson/pick/blob/master/CONTRIBUTING.md
-[debian]: https://packages.debian.org/stretch/pick
-[gentoo]: https://packages.gentoo.org/packages/sys-apps/pick
-[release]: https://github.com/calleerlandsson/pick/releases/
-[ubuntu]: https://packages.ubuntu.com/xenial/pick
-[void]: https://github.com/voidlinux/void-packages/blob/master/srcpkgs/pick/template
-
-## Usage
-
-`pick(1)` reads a list of choices on `stdin` and outputs the selected choice on
-`stdout`. Therefore it is easily used both in pipelines and subshells:
-
-```sh
-git ls-files | pick | xargs less # Select a file in the current git repository to view in less
-cd "$(find . -type d | pick)"    # Select a directory to cd into
-eval $(fc -ln 1 | pick)          # Select a command from the history to execute
-```
-
-Pick can also easily be used from within Vim both using `system()` and `!`. For
-ready-to-map functions, see [the pick.vim Vim plugin]. For examples of how to
-call `pick(1)` from within Vim, see [the pick.vim source code].
-
-***Please note:*** pick requires a fully functional terminal to run and
-therefore cannot be run from within gvim or MacVim.
-
-See the `pick(1)` man page for detailed usage instructions and more examples.
-
-[the pick.vim Vim plugin]: https://github.com/calleerlandsson/pick.vim/
-[the pick.vim source code]: https://github.com/calleerlandsson/pick.vim/blob/master/plugin/pick.vim
-
 ## Copyright
 
 Copyright (c) 2017 Calle Erlandsson, Anton Lindqvist & thoughtbot.
+
+[crux]: https://github.com/6c37/crux-ports
+[current]: https://github.com/mptre/pick/blob/master/CONTRIBUTING.md
+[debian]: https://packages.debian.org/stable/misc/pick
+[gentoo]: https://packages.gentoo.org/packages/sys-apps/pick
+[pick-vim]: https://github.com/calleerlandsson/pick.vim
+[pick]: https://mptre.github.io/pick/
+[release]: https://github.com/mptre/pick/releases/
+[ubuntu]: https://packages.ubuntu.com/xenial/pick
+[void]: https://github.com/voidlinux/void-packages/blob/master/srcpkgs/pick/template

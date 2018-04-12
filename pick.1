@@ -33,7 +33,7 @@ searching.
 .It Fl h
 Output a help message and exit.
 .It Fl K
-Disable toggling of keyboard transmit mode.
+Disable toggling of keypad transmit mode.
 Useful when running
 .Nm
 from within another interactive program which already has set the correct
@@ -118,7 +118,7 @@ The screen is resized.
 Select a file in the current directory to open using
 .Xr xdg-open 1 :
 .Pp
-.Dl $ find -type f | pick | xargs xdg-open
+.Dl $ find \&. -type f | pick | xargs xdg-open
 .Pp
 Select a command from the history to execute:
 .Pp
