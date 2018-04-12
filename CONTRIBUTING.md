@@ -53,7 +53,11 @@ Internal documentation on crafting a release.
    $ git push origin coverity_scan
    ```
 
-2. Update `CHANGELOG.md`.
+2. Update `CHANGELOG.md` and commit the change:
+
+   ```sh
+   $ git commit -m 'Update CHANGELOG'
+   ```
 
 3. Update the version in `configure.ac`:
 
@@ -81,7 +85,7 @@ Internal documentation on crafting a release.
    $ sha256 -c pick-0.0.2.sha256
    ```
 
-6. Tag the repo:
+6. Tag and push:
 
    ```sh
    $ git tag v0.0.2
@@ -102,10 +106,11 @@ Internal documentation on crafting a release.
    To: pick-maintainers@calleerlandsson.com
    Bcc: evaggelos.avgerinos@gmail.com, xuchunyang.me@gmail.com,
         fredrik@fornwall.net, neel@neelc.org, camille@airmail.cc
+   Subject: pick 0.0.2
    ```
 
-[announce]: https://github.com/calleerlandsson/pick/releases/new
-[conduct]: https://github.com/calleerlandsson/pick/blob/master/CODE_OF_CONDUCT.md
-[manual]: https://github.com/calleerlandsson/pick/tree/master/pick.1
+[announce]: https://github.com/mptre/pick/releases/new
+[conduct]: https://github.com/mptre/pick/blob/master/CODE_OF_CONDUCT.md
+[manual]: https://github.com/mptre/pick/tree/master/pick.1
 [style]: https://man.openbsd.org/style
-[test]: https://github.com/calleerlandsson/pick/tree/master/tests#test-suite
+[test]: https://github.com/mptre/pick/tree/master/tests#test-suite

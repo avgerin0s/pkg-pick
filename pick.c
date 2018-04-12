@@ -209,7 +209,7 @@ usage(int status)
 	fprintf(stderr, "usage: pick [-hvKS] [-d [-o]] [-x | -X] [-q query]\n"
 	    "    -h          output this help message and exit\n"
 	    "    -v          output the version and exit\n"
-	    "    -K          disable toggling of keyboard transmit mode\n"
+	    "    -K          disable toggling of keypad transmit mode\n"
 	    "    -S          disable sorting\n"
 	    "    -d          read and display descriptions\n"
 	    "    -o          output description of selected on exit\n"
@@ -325,12 +325,8 @@ selected_choice(void)
 			choices_count = choices.length;
 		query_grew = 0;
 		if (dofilter) {
-			if (filter_choices(choices_count)) {
+			if ((dochoices = filter_choices(choices_count)))
 				dofilter = selection = yscroll = 0;
-				dochoices = 1;
-			} else {
-				dochoices = 0;
-			}
 		}
 
 		tty_putp(cursor_invisible, 0);
@@ -380,11 +376,8 @@ selected_choice(void)
 				    isu8cont(query[cursor_position - length]);
 				    length++)
 					continue;
-				delete_between(
-				    query,
-				    query_length,
-				    cursor_position - length,
-				    cursor_position);
+				delete_between(query, query_length,
+				    cursor_position - length, cursor_position);
 				cursor_position -= length;
 				query_length -= length;
 				dofilter = 1;
@@ -396,30 +389,20 @@ selected_choice(void)
 				    isu8cont(query[cursor_position + length]);
 				    length++)
 					continue;
-				delete_between(
-				    query,
-				    query_length,
-				    cursor_position,
-				    cursor_position + length);
+				delete_between(query, query_length,
+				    cursor_position, cursor_position + length);
 				query_length -= length;
 				dofilter = 1;
 			}
 			break;
 		case CTRL_U:
-			delete_between(
-			    query,
-			    query_length,
-			    0,
-			    cursor_position);
+			delete_between(query, query_length, 0, cursor_position);
 			query_length -= cursor_position;
 			cursor_position = 0;
 			dofilter = 1;
 			break;
 		case CTRL_K:
-			delete_between(
-			    query,
-			    query_length,
-			    cursor_position,
+			delete_between(query, query_length, cursor_position,
 			    query_length);
 			query_length = cursor_position;
 			dofilter = 1;
@@ -574,7 +557,8 @@ choicecmp(const void *p1, const void *p2)
 {
 	const struct choice	*c1, *c2;
 
-	c1 = p1, c2 = p2;
+	c1 = p1;
+	c2 = p2;
 	if (c1->score < c2->score)
 		return 1;
 	if (c1->score > c2->score)
@@ -600,7 +584,7 @@ min_match(const char *string, size_t offset, ssize_t *start, ssize_t *end)
 	size_t		 length;
 
 	q = query;
-	if ((s = e = strcasechr(&string[offset], q)) == NULL)
+	if (*q == '\0' || (s = e = strcasechr(&string[offset], q)) == NULL)
 		return INT_MAX;
 
 	for (;;) {
@@ -830,8 +814,8 @@ print_line(const char *str, size_t len, int standout,
 		 */
 		if (str[i] == '\0') {
 			tty_putc(' ');
-
-			i++, col++;
+			i++;
+			col++;
 			continue;
 		}
 
@@ -950,10 +934,13 @@ get_key(const char **key)
 		KEY(HOME,	"\033<"),
 		CAP(LEFT,	"kcub1"),
 		KEY(LEFT,	"\002"),
+		KEY(LEFT,	"\033OD"),
 		CAP(LINE_DOWN,	"kcud1"),
 		KEY(LINE_DOWN,	"\016"),
+		KEY(LINE_DOWN,	"\033OB"),
 		CAP(LINE_UP,	"kcuu1"),
 		KEY(LINE_UP,	"\020"),
+		KEY(LINE_UP,	"\033OA"),
 		CAP(PAGE_DOWN,	"knp"),
 		KEY(PAGE_DOWN,	"\026"),
 		KEY(PAGE_DOWN,	"\033 "),
@@ -961,6 +948,7 @@ get_key(const char **key)
 		KEY(PAGE_UP,	"\033v"),
 		CAP(RIGHT,	"kcuf1"),
 		KEY(RIGHT,	"\006"),
+		KEY(RIGHT,	"\033OC"),
 		KEY(UNKNOWN,	NULL),
 	};
 	static unsigned char	buf[8];
