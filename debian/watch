@@ -1,2 +1,2 @@
 version=3
-https://github.com/calleerlandsson/pick/tags .*/v([\d.]+)\.tar\.gz
+https://github.com/mptre/pick/tags .*/v([\d.]+)\.tar\.gz

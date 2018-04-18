@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Aggelos Avgerinos <evaggelos.avgerinos@gmail.com>
 Build-Depends: debhelper(>= 11), libncurses5-dev, pkg-config, locales-all
 Standards-Version: 4.1.3
-Homepage: https://github.com/calleerlandsson/pick
+Homepage: https://github.com/mptre/pick
 Vcs-Git: https://github.com/eavgerinos/pkg-pick.git
 Vcs-Browser: https://github.com/eavgerinos/pkg-pick
 
