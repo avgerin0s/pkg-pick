@@ -75,6 +75,12 @@ make install clean
 pkg install pick
 ```
 
+### NetBSD via pkgsrc
+
+```sh
+pkg_add pick
+```
+
 ### OpenBSD
 
 ```sh
@@ -83,22 +89,21 @@ pkg_add pick
 
 ### From source
 
-Download the latest [release] and follow the bundled instructions in
-`INSTALL.md`.
-
-If you want to try the latest unreleased version,
-follow the instructions in [CONTRIBUTING.md][current].
+```sh
+./configure
+make install
+```
 
 ## Copyright
 
-Copyright (c) 2017 Calle Erlandsson, Anton Lindqvist & thoughtbot.
+Copyright (c) 2019 Calle Erlandsson, Anton Lindqvist & thoughtbot.
 
 [crux]: https://github.com/6c37/crux-ports
 [current]: https://github.com/mptre/pick/blob/master/CONTRIBUTING.md
 [debian]: https://packages.debian.org/stable/misc/pick
 [gentoo]: https://packages.gentoo.org/packages/sys-apps/pick
 [pick-vim]: https://github.com/calleerlandsson/pick.vim
-[pick]: https://mptre.github.io/pick/
+[pick]: https://www.basename.se/pick/
 [release]: https://github.com/mptre/pick/releases/
 [ubuntu]: https://packages.ubuntu.com/xenial/pick
-[void]: https://github.com/voidlinux/void-packages/blob/master/srcpkgs/pick/template
+[void]: https://github.com/void-linux/void-packages/blob/master/srcpkgs/pick/template

@@ -1,3 +1,16 @@
+# v3.0.0 - 2019-02-27
+
+## Changes
+
+- pick is now available as a package on NetBSD.
+  (ec5b83b)
+  (Jenz Guenther)
+
+- Usage of autoconf and automake has been replaced in favor of a shell-script
+  and plain Makefile(s). The process of building pick remains the same.
+  (970c5f4)
+  (Anton Lindqvist)
+
 # v2.0.2 - 2018-04-10
 
 ## Changes
@@ -16,7 +29,7 @@
   (Anton Lindqvist)
 
 - Make the cursor keys work in the rxvt terminal emulator.
-  (70e9a92, #275, #277)
+  (4fec5f6, #275, #277)
   (Jenz Guenther)
 
 - Limit usage of malloc.conf options to OpenBSD since the options used have a
