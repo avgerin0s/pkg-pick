@@ -1,6 +1,6 @@
 include ${.CURDIR}/Makefile.inc
 
-VERSION=	3.0.0
+VERSION=	3.0.1
 
 PROG=	pick
 
@@ -67,8 +67,6 @@ DISTFILES+=	tests/opt-x.t
 DISTFILES+=	tests/pick-test.c
 DISTFILES+=	tests/pick-test.sh
 
-PREFIX=	/usr/local
-
 all: ${PROG}
 
 ${PROG}: ${OBJS}
@@ -98,10 +96,10 @@ distclean: clean
 .PHONY: distclean
 
 install: ${PROG}
-	@mkdir -p ${DESTDIR}${PREFIX}/bin
-	${INSTALL} ${PROG} ${DESTDIR}${PREFIX}/bin
-	@mkdir -p ${DESTDIR}${PREFIX}/man/man1
-	${INSTALL} ${.CURDIR}/pick.1 ${DESTDIR}${PREFIX}/man/man1
+	@mkdir -p ${DESTDIR}${BINDIR}
+	${INSTALL} ${PROG} ${DESTDIR}${BINDIR}
+	@mkdir -p ${DESTDIR}${MANDIR}/man1
+	${INSTALL_MAN} ${.CURDIR}/pick.1 ${DESTDIR}${MANDIR}/man1
 .PHONY: install
 
 test: ${PROG}
