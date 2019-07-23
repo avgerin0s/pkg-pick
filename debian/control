@@ -6,7 +6,7 @@ Build-Depends: debhelper-compat (= 12),
                libncurses5-dev,
                locales-all,
                pkg-config,
-Standards-Version: 4.3.0
+Standards-Version: 4.4.0
 Homepage: https://github.com/mptre/pick
 Vcs-Git: https://github.com/eavgerinos/pkg-pick.git
 Vcs-Browser: https://github.com/eavgerinos/pkg-pick
