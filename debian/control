@@ -2,7 +2,10 @@ Source: pick
 Section: misc
 Priority: optional
 Maintainer: Aggelos Avgerinos <evaggelos.avgerinos@gmail.com>
-Build-Depends: debhelper(>= 12), libncurses5-dev, pkg-config, locales-all
+Build-Depends: debhelper (>= 12),
+               libncurses5-dev,
+               locales-all,
+               pkg-config,
 Standards-Version: 4.3.0
 Homepage: https://github.com/mptre/pick
 Vcs-Git: https://github.com/eavgerinos/pkg-pick.git
@@ -10,7 +13,8 @@ Vcs-Browser: https://github.com/eavgerinos/pkg-pick
 
 Package: pick
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
 Description: utility to choose one option from a set of choices
  The pick utility allows users to choose one option from a set of
  choices using an interface with fuzzy search functionality.
