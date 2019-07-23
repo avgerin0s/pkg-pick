@@ -1,12 +1,15 @@
-pick (3.0.0-1) unstable; urgency=medium
+pick (3.0.1-1) unstable; urgency=medium
 
-  * New upstream version 3.0.0
-  * d/control: Bump debhelper version and compat to 12
-  * d/control: Bump standards version to 4.3.0
-  * d/rules: Override dh_auto_install in order to avoid installing binary in
-    /usr/local/bin
+  * New upstream version 3.0.1
+  * d/control: Bump debhelper version and compat to 12; no changes needed
+  * Replace d/compat with debhelper-compat
+  * d/control: Bump standards version to 4.4.0; no changes needed
+  * d/control: Run wrap-and-sort for better git diff
+  * d/rules: Set PREFIX variable to /usr
+  * d/rules: Set MANDIR to /var/cahce/man
+  * d/rules: Skip dh_auto_clean since Makefile depends on configure
 
- -- Aggelos Avgerinos <evaggelos.avgerinos@gmail.com>  Thu, 28 Feb 2019 14:23:39 +0200
+ -- Aggelos Avgerinos <evaggelos.avgerinos@gmail.com>  Tue, 23 Jul 2019 21:11:47 +0300
 
 pick (2.0.2-1) unstable; urgency=medium
 
